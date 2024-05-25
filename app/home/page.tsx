@@ -6,23 +6,31 @@ import { useEffect, useState } from "react";
 import { Post } from "../api/models/post";
 import { Button } from "@/components/ui/button";
 import Nav from "../Nav";
+import Error from "../Error";
+import Loading from "../LoadingComp";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [username, setUsername] = useState("");
-
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const token = getCookie("token");
     if (token) {
+      setLoading(true);
       axios
-        .get("/api/posts", {
+        .get("/api/posts/", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         .then((res) => {
           setPosts(res.data);
-        });
+        })
+        .catch((err) => {
+          setError(err.response.data);
+        })
+        .finally(() => setLoading(false));
 
       const decoded: any = jwt.decode(token as any);
       setUsername(decoded.username);
@@ -109,7 +117,11 @@ export default function Home() {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : error ? (
+    <Error error={error} />
+  ) : (
     <>
       <Nav />
       <div className="flex flex-col gap-[5vh] items-center mt-[30vh]">
