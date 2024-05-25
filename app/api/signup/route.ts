@@ -2,8 +2,10 @@ import { User } from "../models/user";
 import { isEmpty } from "../isEmpty";
 import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
+import { connectDb } from "../setup";
 
 export async function POST(req: Request) {
+  connectDb();
   try {
     const { username, password } = await req.json();
 
