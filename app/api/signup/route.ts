@@ -9,47 +9,21 @@ export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
 
-    // Validate input
-    if (!username || !password || isEmpty([username, password])) {
-      return new Response(JSON.stringify({ message: "Invalid data" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    if (!username || !password || isEmpty([username, password]))
+      return new Response("Invalid data", { status: 400 });
 
-    // Check if the user already exists
     const userCheck = await User.findOne({ username });
-    if (userCheck) {
-      return new Response(JSON.stringify({ message: "Username taken" }), {
-        status: 409, // Conflict status code
-        headers: { "Content-Type": "application/json" },
-      });
-    }
 
-    // Create a new user
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (userCheck) return new Response("Username taken", { status: 404 });
+
     const user = await User.create({
       username,
-      password: hashedPassword,
+      password: await bcrypt.hash(password, 10),
     });
+    const token = jwt.sign({ id: user._id, username }, "secret");
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id, username },
-      process.env.JWT_SECRET || "default_secret", // Use an environment variable for the secret
-      { expiresIn: "1h" } // Token expiry time
-    );
-
-    // Respond with the token
-    return new Response(JSON.stringify({ token }), {
-      status: 201, // Created status code
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(token);
   } catch (error: any) {
-    console.error("Error in signup API:", error); // Log the error
-    return new Response(JSON.stringify({ message: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(error.message, { status: 500 });
   }
 }
