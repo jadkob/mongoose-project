@@ -1,7 +1,9 @@
 import * as jwt from "jsonwebtoken";
 import { Post } from "../../models/post";
+import { connectDb } from "../../setup";
 
 export async function POST(req: Request) {
+  connectDb();
   try {
     const { postId } = await req.json();
     const authHeader = req.headers.get("Authorization");
